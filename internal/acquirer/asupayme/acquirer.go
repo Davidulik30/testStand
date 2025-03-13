@@ -2,7 +2,7 @@ package asupayme
 
 import (
 	"context"
-	"fmt"
+	"strconv"
 	"testStand/internal/acquirer"
 	"testStand/internal/acquirer/asupayme/api"
 	"testStand/internal/acquirer/helper"
@@ -49,26 +49,26 @@ func (a *Acquirer) Payment(ctx context.Context, txn *models.Transaction) (*acqui
 func (a *Acquirer) Payout(ctx context.Context, txn *models.Transaction) (*acquirer.TransactionStatus, error) {
 	request := &api.Request{
 		Merchant:   a.channelParams.MerchId,
-		WithdrawId: fmt.Sprintf("%d", txn.TxnId),
-		Amount:     fmt.Sprintf("%d", txn.TxnAmountSrc),
+		WithdrawId: strconv.FormatInt(txn.TxnId, 10),
+		Amount:     strconv.FormatInt(txn.TxnAmountSrc, 10),
 		CardData: api.CardData{
 			CardNumber: txn.PaymentData.Object.Credentials,
 		},
 	}
 	request.Signature = api.GenerateSignature(request, a.channelParams.SecretKey)
 	response, err := a.api.MakePayout(request)
-	
-	request.CardData.CardNumber = api.CleanCardNumber(request.CardData.CardNumber)
-
 	if err != nil {
 		return nil, err
 	}
+
+	//это просто чтобы убрать лишние символы из номера карты (нечисленные), но если не надо то ладно
+	//request.CardData.CardNumber = api.CleanCardNumber(request.CardData.CardNumber)
 
 	if response.Status != "success" {
 		return &acquirer.TransactionStatus{
 			Status: acquirer.REJECTED,
 			Info: map[string]string{
-				"ps_error_code": response.Error,
+				"ps_error_message": response.Error,
 			},
 		}, nil
 	}

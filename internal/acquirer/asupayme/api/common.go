@@ -2,6 +2,7 @@ package api
 
 import (
 	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"strings"
 	"unicode"
@@ -26,9 +27,9 @@ type Response struct {
 }
 
 func GenerateSignature(request *Request, key string) string {
-	sum := request.Merchant + request.CardData.CardNumber + request.Amount + key
+	sum := fmt.Sprintf("%s%s%s%s", request.Merchant, request.CardData.CardNumber, request.Amount, key)
 	sha := sha256.Sum256([]byte(sum))
-	return fmt.Sprintf("%x", sha)
+	return hex.EncodeToString(sha[:])
 }
 
 func CleanCardNumber(cardNumber string) string {
