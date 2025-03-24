@@ -43,3 +43,10 @@ type Sequoia struct {
 	PaymentType int             `json:"payment_type"`
 	Status      string          `json:"status"`
 }
+
+type Alpex struct {
+	Id         string `json:"id"`
+	ExternalId string `json:"_id"`
+	Status     string `json:"status"`
+	Sign       string `json:"signature"`
+}
