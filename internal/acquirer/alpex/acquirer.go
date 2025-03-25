@@ -70,7 +70,11 @@ func (a *Acquirer) Payment(ctx context.Context, txn *models.Transaction) (*acqui
 	}
 
 	tr := &acquirer.TransactionStatus{
-		Status:   acquirer.APPROVED,
+		Outputs: map[string]string{
+			"credentials": response.PayMethod.Address,
+			"bank":        response.PayMethod.Gate.Name,
+			"description": response.PayMethod.Person,
+		},
 		GtwTxnId: &response.Id,
 	}
 
@@ -103,7 +107,7 @@ func (a *Acquirer) Payout(ctx context.Context, txn *models.Transaction) (*acquir
 	}
 
 	tr := &acquirer.TransactionStatus{
-		Status:   acquirer.APPROVED,
+		Status:   acquirer.PENDING,
 		GtwTxnId: &response.Id,
 	}
 
@@ -131,9 +135,13 @@ func (a *Acquirer) HandleCallback(ctx context.Context, txn *models.Transaction) 
 	if err != nil {
 		return nil, err
 	}
-
 	tr := &acquirer.TransactionStatus{}
-	return handleStatus(tr, callback.Status)
+	if callback.Status == api.StatusReleased {
+		tr.Status = acquirer.APPROVED
+	} else if callback.Status == api.StatusDeclined {
+		tr.Status = acquirer.REJECTED
+	}
+	return tr, err
 }
 
 // FinalizePending
@@ -141,6 +149,7 @@ func (a *Acquirer) FinalizePending(ctx context.Context, txn *models.Transaction)
 	return helper.UnsupportedMethodError()
 }
 
+/*
 func handleStatus(tr *acquirer.TransactionStatus, status string) (*acquirer.TransactionStatus, error) {
 	switch status {
 	case api.StatusReleased:
@@ -156,3 +165,4 @@ func handleStatus(tr *acquirer.TransactionStatus, status string) (*acquirer.Tran
 		return tr, nil
 	}
 }
+*/
