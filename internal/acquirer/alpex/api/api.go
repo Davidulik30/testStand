@@ -31,7 +31,7 @@ func NewClient(baseAddress, login string, password string, timeout *int) *Client
 	}
 }
 
-// MakePayout
+// MakePayment
 func (c *Client) MakePayInOut(request *Request) (*Response, error) {
 
 	resp := &Response{}
