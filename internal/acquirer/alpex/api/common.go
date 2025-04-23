@@ -14,6 +14,7 @@ const (
 )
 
 type Request struct {
+	ExternalId      string `json:"external_id"`
 	CustomerName    string `json:"customer_name"`
 	CustomerAddress string `json:"customer_address"`
 	Direction       string `json:"direction"`
@@ -30,8 +31,7 @@ type Response struct {
 	PaymentMethod PaymentMethod `json:"payment_method"`
 	Signature     string        `json:"signature"`
 	Direction     string        `json:"direction"`
-	Amount        int           `json:"amount"`
-	AmountFiat    int           `json:"amount_fiat"`
+	AmountFiat    string        `json:"amount_fiat"`
 	ApproveCode   string        `json:"approve_code"`
 }
 

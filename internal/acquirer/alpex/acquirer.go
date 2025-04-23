@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/labstack/gommon/log"
+	"strconv"
 	"testStand/internal/acquirer"
 	"testStand/internal/acquirer/alpex/api"
 	"testStand/internal/acquirer/helper"
@@ -55,6 +56,7 @@ func NewAcquirer(ctx context.Context, db *repos.Repo, channelParams *ChannelPara
 func (a *Acquirer) Payment(ctx context.Context, txn *models.Transaction) (*acquirer.TransactionStatus, error) {
 
 	requestBody := &api.Request{
+		ExternalId:      strconv.FormatInt(txn.TxnId, 10),
 		Symbol:          txn.TxnCurrencySrc,
 		Amount:          txn.TxnAmountSrc,
 		Direction:       DirectionBuy,
@@ -110,6 +112,7 @@ func (a *Acquirer) Payout(ctx context.Context, txn *models.Transaction) (*acquir
 	}
 
 	requestData := &api.Request{
+		ExternalId:      strconv.FormatInt(txn.TxnId, 10),
 		Symbol:          txn.TxnCurrencySrc,
 		Amount:          txn.TxnAmountSrc,
 		CustomerName:    fullName,
@@ -158,6 +161,11 @@ func (a *Acquirer) HandleCallback(ctx context.Context, txn *models.Transaction) 
 	err := json.Unmarshal([]byte(callbackBody), &callback)
 	if err != nil {
 		logger.Error("Error unmarshalling callback body - ", callbackBody)
+		return nil, err
+	}
+
+	err = a.api.GetAccessToken(ctx)
+	if err != nil {
 		return nil, err
 	}
 
