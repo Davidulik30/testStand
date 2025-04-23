@@ -14,7 +14,6 @@ const (
 )
 
 type Request struct {
-	Id              string `json:"_id"`
 	CustomerName    string `json:"customer_name"`
 	CustomerAddress string `json:"customer_address"`
 	Direction       string `json:"direction"`

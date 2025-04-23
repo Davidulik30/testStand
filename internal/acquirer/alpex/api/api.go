@@ -12,6 +12,7 @@ type Client struct {
 	baseAddress string
 	email       string
 	password    string
+	token       string
 	client      *http.Client
 }
 
@@ -20,8 +21,6 @@ const (
 	signatureKeyEndpoint = "/v1/user/generate-signature-key"
 	accessTokenEndpoint  = "/v1/auth/login"
 )
-
-var token string
 
 func NewClient(ctx context.Context, baseAddress, email, password string) *Client {
 
@@ -76,8 +75,8 @@ func (c *Client) makeRequest(ctx context.Context, payload, outResponse any, endp
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	if len(token) != 0 {
-		req.Header.Set("Authorization", "Bearer "+token)
+	if len(c.token) != 0 {
+		req.Header.Set("Authorization", "Bearer "+c.token)
 	}
 
 	resp, err := c.client.Do(req)
@@ -124,7 +123,7 @@ func (c *Client) GetAccessToken(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	token = tokenMap["access_token"]
+	c.token = tokenMap["access_token"]
 
 	return nil
 }
