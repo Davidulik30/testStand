@@ -155,11 +155,6 @@ func (a *Acquirer) fillPayoutRequest(ctx context.Context, txn *models.Transactio
 	return request, nil
 }
 
-// FinalizePending
-func (a *Acquirer) FinalizePending(ctx context.Context, txn *models.Transaction) (*acquirer.TransactionStatus, error) {
-	return helper.UnsupportedMethodError()
-}
-
 // HandleCallback
 func (a *Acquirer) HandleCallback(ctx context.Context, txn *models.Transaction) (*acquirer.TransactionStatus, error) {
 
@@ -207,4 +202,9 @@ func handleStatus(tr *acquirer.TransactionStatus, status string) (*acquirer.Tran
 		tr.Status = acquirer.PENDING
 		return tr, nil
 	}
+}
+
+// FinalizePending
+func (a *Acquirer) FinalizePending(ctx context.Context, txn *models.Transaction) (*acquirer.TransactionStatus, error) {
+	return helper.UnsupportedMethodError()
 }
