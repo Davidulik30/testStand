@@ -31,7 +31,7 @@ type ChannelParams struct {
 	Email     string `json:"email"`
 	Password  string `json:"password"`
 	SecretKey string `json:"secret_key"`
-	Id        string `json:"id"`
+	GateId    string `json:"gate_id"`
 }
 
 type Acquirer struct {
@@ -56,16 +56,18 @@ func NewAcquirer(ctx context.Context, db *repos.Repo, channelParams *ChannelPara
 func (a *Acquirer) Payment(ctx context.Context, txn *models.Transaction) (*acquirer.TransactionStatus, error) {
 
 	requestBody := &api.Request{
-		ExternalId:      strconv.FormatInt(txn.TxnId, 10),
 		Id:              strconv.FormatInt(txn.TxnId, 10),
 		Symbol:          txn.TxnCurrencySrc,
 		Amount:          txn.TxnAmountSrc,
-		Status:          txn.TxnStatusId,
 		Direction:       DirectionBuy,
 		CustomerName:    txn.Customer.FullName,
-		CustomerAddress: txn.Customer.Address,
-		Credentials:     txn.PaymentData.Object.Credentials,
+		CustomerAddress: txn.PaymentData.Object.Credentials,
 		WebhookUrl:      "https://webhook.site/2e121990-aeaf-4680-98c2-babc293fbb11",
+	}
+
+	err := a.api.GetAccessToken(ctx)
+	if err != nil {
+		return nil, err
 	}
 
 	response, err := a.api.MakePayment(ctx, requestBody)
@@ -91,15 +93,36 @@ func (a *Acquirer) Payment(ctx context.Context, txn *models.Transaction) (*acqui
 	}
 
 	return &acquirer.TransactionStatus{
-		Status:  acquirer.PENDING,
-		Outputs: outputs,
+		Status:   acquirer.PENDING,
+		GtwTxnId: &response.Id,
 	}, nil
 }
 
 // Payout
 func (a *Acquirer) Payout(ctx context.Context, txn *models.Transaction) (*acquirer.TransactionStatus, error) {
 
-	requestData, err := a.fillPayoutRequest(ctx, txn)
+	fullName := txn.Customer.FullName
+	if len(fullName) == 0 {
+		return nil, errors.New("customer's fullName is required")
+	}
+
+	address := txn.PaymentData.Object.Credentials
+	if len(address) == 0 {
+		return nil, errors.New("customer's address is required")
+	}
+
+	requestData := &api.Request{
+		Id:              strconv.FormatInt(txn.TxnId, 10),
+		Symbol:          txn.TxnCurrencySrc,
+		Amount:          txn.TxnAmountSrc,
+		CustomerName:    fullName,
+		CustomerAddress: address,
+		Direction:       DirectionSell,
+		WebhookUrl:      "https://webhook.site/2e121990-aeaf-4680-98c2-babc293fbb11",
+		GateId:          a.channelParams.GateId,
+	}
+
+	err := a.api.GetAccessToken(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -118,41 +141,10 @@ func (a *Acquirer) Payout(ctx context.Context, txn *models.Transaction) (*acquir
 		}, nil
 	}
 
-	tr := &acquirer.TransactionStatus{
+	return &acquirer.TransactionStatus{
 		Status:   acquirer.PENDING,
 		GtwTxnId: &response.Id,
-	}
-
-	return tr, nil
-}
-
-func (a *Acquirer) fillPayoutRequest(ctx context.Context, txn *models.Transaction) (*api.Request, error) {
-
-	fullName := txn.Customer.FullName
-	if len(fullName) == 0 {
-		return nil, errors.New("customer's fullName is required")
-	}
-
-	address := txn.Customer.Address
-	if len(address) == 0 {
-		return nil, errors.New("customer's address is required")
-	}
-
-	request := &api.Request{
-		ExternalId:      strconv.FormatInt(txn.TxnId, 10),
-		Id:              strconv.FormatInt(txn.TxnId, 10),
-		Status:          txn.TxnStatusId,
-		Symbol:          txn.TxnCurrencySrc,
-		Amount:          txn.TxnAmountSrc,
-		CustomerName:    fullName,
-		CustomerAddress: address,
-		Credentials:     txn.PaymentData.Object.Credentials,
-		Direction:       DirectionSell,
-		WebhookUrl:      "https://webhook.site/2e121990-aeaf-4680-98c2-babc293fbb11",
-		GateId:          a.channelParams.Id,
-	}
-
-	return request, nil
+	}, nil
 }
 
 // HandleCallback
@@ -161,7 +153,6 @@ func (a *Acquirer) HandleCallback(ctx context.Context, txn *models.Transaction) 
 	logger := log.New("dev")
 
 	callbackBody, ok := txn.TxnInfo["callback"]
-
 	if !ok {
 		return nil, errors.New("callback body is missing")
 	}
@@ -173,8 +164,6 @@ func (a *Acquirer) HandleCallback(ctx context.Context, txn *models.Transaction) 
 		return nil, err
 	}
 
-	tr := &acquirer.TransactionStatus{}
-
 	signatureKey, err := a.api.GetSignatureKey(ctx)
 	if err != nil {
 		return nil, err
@@ -182,13 +171,13 @@ func (a *Acquirer) HandleCallback(ctx context.Context, txn *models.Transaction) 
 	neededCallbackSign := api.CreateSign(callback.Id, callback.Status, signatureKey.SignKey)
 
 	if callback.Sign != neededCallbackSign {
-		logger.Error("Invalid Callback")
-		return tr, nil
+		return nil, errors.New("invalid Callback")
 	}
-	return handleStatus(tr, callback.Status)
+	return handleStatus(callback.Status)
 }
 
-func handleStatus(tr *acquirer.TransactionStatus, status string) (*acquirer.TransactionStatus, error) {
+func handleStatus(status string) (*acquirer.TransactionStatus, error) {
+	tr := &acquirer.TransactionStatus{}
 	switch status {
 	case api.Released:
 		tr.Status = acquirer.APPROVED

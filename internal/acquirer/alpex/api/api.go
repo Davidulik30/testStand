@@ -10,19 +10,18 @@ import (
 
 type Client struct {
 	baseAddress string
-	accessToken string
 	email       string
 	password    string
-	Id          string
 	client      *http.Client
 }
 
 const (
-	PayoutEndpoint       = "v1/offer/external"
-	PaymentEndpoint      = "v1/offer/external"
-	SignatureKeyEndpoint = "/v1/user/generate-signature-key"
-	AccessTokenEndpoint  = "/v1/auth/login"
+	offerEndpoint        = "v1/offer/external"
+	signatureKeyEndpoint = "/v1/user/generate-signature-key"
+	accessTokenEndpoint  = "/v1/auth/login"
 )
+
+var token string
 
 func NewClient(ctx context.Context, baseAddress, email, password string) *Client {
 
@@ -40,7 +39,7 @@ func NewClient(ctx context.Context, baseAddress, email, password string) *Client
 func (c *Client) MakePayout(ctx context.Context, request *Request) (*Response, error) {
 
 	resp := &Response{}
-	err := c.makeRequest(ctx, request, resp, PayoutEndpoint)
+	err := c.makeRequest(ctx, request, resp, offerEndpoint)
 	if err != nil {
 		return nil, err
 	}
@@ -52,10 +51,11 @@ func (c *Client) MakePayout(ctx context.Context, request *Request) (*Response, e
 func (c *Client) MakePayment(ctx context.Context, request *Request) (*Response, error) {
 
 	resp := &Response{}
-	err := c.makeRequest(ctx, request, resp, PaymentEndpoint)
+	err := c.makeRequest(ctx, request, resp, offerEndpoint)
 	if err != nil {
 		return nil, err
 	}
+
 	return resp, nil
 }
 
@@ -72,12 +72,13 @@ func (c *Client) makeRequest(ctx context.Context, payload, outResponse any, endp
 		return err
 	}
 
-	token, err := c.getAccessToken(ctx)
 	if err != nil {
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+token.AccessToken)
+	if len(token) != 0 {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
 
 	resp, err := c.client.Do(req)
 	if err != nil {
@@ -87,7 +88,7 @@ func (c *Client) makeRequest(ctx context.Context, payload, outResponse any, endp
 
 	err = json.NewDecoder(resp.Body).Decode(&outResponse)
 	if err != nil {
-		return nil // error EOF, because invalid url
+		return err // error EOF, because invalid url
 	}
 
 	return nil
@@ -102,7 +103,7 @@ func (c *Client) GetSignatureKey(ctx context.Context) (*UserSignToken, error) {
 
 	key := &UserSignToken{}
 
-	err := c.makeRequest(ctx, user, key, SignatureKeyEndpoint)
+	err := c.makeRequest(ctx, user, key, signatureKeyEndpoint)
 
 	if err != nil {
 		return nil, err
@@ -111,37 +112,19 @@ func (c *Client) GetSignatureKey(ctx context.Context) (*UserSignToken, error) {
 	return key, nil
 }
 
-func (c *Client) getAccessToken(ctx context.Context) (*UserSignToken, error) {
+func (c *Client) GetAccessToken(ctx context.Context) error {
 
 	user := User{
 		Email:    c.email,
 		Password: c.password,
 	}
 
-	token := &UserSignToken{}
-
-	body, err := json.Marshal(user)
+	tokenMap := make(map[string]string)
+	err := c.makeRequest(ctx, user, &tokenMap, accessTokenEndpoint)
 	if err != nil {
-		return nil, err
+		return err
 	}
+	token = tokenMap["access_token"]
 
-	req, err := http.NewRequest(http.MethodPost, helper.JoinUrl(c.baseAddress, AccessTokenEndpoint), bytes.NewReader(body))
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	err = json.NewDecoder(resp.Body).Decode(&token)
-	if err != nil {
-		return nil, err // error EOF, because invalid url
-	}
-
-	return token, nil
+	return nil
 }

@@ -119,7 +119,7 @@ func (x Transaction_Status) String() string {
 }
 
 //type Customer struct {
-//	Id            int32   `json:"id,omitempty"`
+//	GateId            int32   `json:"id,omitempty"`
 //	MerchantId    string  `json:"merchant_id,omitempty"`
 //	AccountId     *string `json:"account_id,omitempty"`
 //	Phone         *string `json:"phone,omitempty"`

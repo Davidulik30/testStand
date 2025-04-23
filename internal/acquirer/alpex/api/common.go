@@ -14,18 +14,15 @@ const (
 )
 
 type Request struct {
-	Id              string `json:"id"`
-	ExternalId      string `json:"external_id"`
+	Id              string `json:"_id"`
 	CustomerName    string `json:"customer_name"`
 	CustomerAddress string `json:"customer_address"`
-	Status          string `json:"status"`
 	Direction       string `json:"direction"`
 	Amount          int64  `json:"fiat_amount"`
 	Symbol          string `json:"fiat_symbol"`
 	GateId          string `json:"gate_id"`
 	WebhookUrl      string `json:"webhook_url"`
 	Signature       string `json:"signature"`
-	Credentials     string `json:"credentials"`
 }
 
 type Response struct {
@@ -62,18 +59,13 @@ type Callback struct {
 	Sign             string `json:"signature"`
 }
 
-type StatusRequest struct {
-	Id string `json:"id"`
-}
-
 type User struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
 type UserSignToken struct {
-	SignKey     string `json:"signature_key"`
-	AccessToken string `json:"access_token"`
+	SignKey string `json:"signature_key"`
 }
 
 func CreateSign(id, status, key string) string {
