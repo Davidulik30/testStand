@@ -9,11 +9,12 @@ import (
 )
 
 type Client struct {
-	baseAddress string
-	email       string
-	password    string
-	token       string
-	client      *http.Client
+	baseAddress  string
+	email        string
+	password     string
+	token        string
+	SignatureKey string
+	client       *http.Client
 }
 
 const (
@@ -93,22 +94,21 @@ func (c *Client) makeRequest(ctx context.Context, payload, outResponse any, endp
 	return nil
 }
 
-func (c *Client) GetSignatureKey(ctx context.Context) (*UserSignToken, error) {
+func (c *Client) GetSignatureKey(ctx context.Context) error {
 
 	user := User{
 		Email:    c.email,
 		Password: c.password,
 	}
 
-	key := &UserSignToken{}
-
-	err := c.makeRequest(ctx, user, key, signatureKeyEndpoint)
-
+	keyMap := make(map[string]string)
+	err := c.makeRequest(ctx, user, &keyMap, signatureKeyEndpoint)
 	if err != nil {
-		return nil, err
+		return err
 	}
+	c.SignatureKey = keyMap["signature_key"]
 
-	return key, nil
+	return nil
 }
 
 func (c *Client) GetAccessToken(ctx context.Context) error {

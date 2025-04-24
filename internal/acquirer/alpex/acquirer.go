@@ -94,6 +94,7 @@ func (a *Acquirer) Payment(ctx context.Context, txn *models.Transaction) (*acqui
 
 	return &acquirer.TransactionStatus{
 		Status:   acquirer.PENDING,
+		Outputs:  outputs,
 		GtwTxnId: &response.Id,
 	}, nil
 }
@@ -169,11 +170,11 @@ func (a *Acquirer) HandleCallback(ctx context.Context, txn *models.Transaction) 
 		return nil, err
 	}
 
-	signatureKey, err := a.api.GetSignatureKey(ctx)
+	err = a.api.GetSignatureKey(ctx)
 	if err != nil {
 		return nil, err
 	}
-	neededCallbackSign := api.CreateSign(callback.Id, callback.Status, signatureKey.SignKey)
+	neededCallbackSign := api.CreateSign(callback.Id, callback.Status, a.api.SignatureKey)
 
 	if callback.Sign != neededCallbackSign {
 		return nil, errors.New("invalid Callback")
