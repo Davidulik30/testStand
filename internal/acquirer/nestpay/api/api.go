@@ -101,6 +101,9 @@ func (c *Client) CheckStatus(ctx context.Context, request *StatusRequest) (*Stat
 
 	statusResp := &StatusResponse{}
 	err = xml.NewDecoder(resp.Body).Decode(statusResp)
+	if err != nil {
+		return nil, err
+	}
 
 	return statusResp, nil
 }
