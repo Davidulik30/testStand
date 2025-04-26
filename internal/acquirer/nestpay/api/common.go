@@ -35,6 +35,7 @@ type Request struct {
 }
 
 type PaymentResponse struct {
+	ErrMsg   string `form:"ErrMsg"`
 	Amount   int    `form:"amount"`
 	Cavv     string `form:"cavv"`
 	ClientIP string `form:"clientIp"`
@@ -69,7 +70,7 @@ type StatusResponse struct {
 	OrderId        string `xml:"OrderId"`
 }
 
-func SetHash(request *Request, storeKey string) error {
+func setHash(request *Request, storeKey string) error {
 
 	requestMap := structs.Map(request)
 

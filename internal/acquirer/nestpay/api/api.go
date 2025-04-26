@@ -16,6 +16,7 @@ import (
 type Client struct {
 	baseAddress string
 	currency    string
+	storeKey    string
 	client      *http.Client
 }
 
@@ -24,17 +25,23 @@ const (
 	checkStatusEndpoint = "/fim/api"
 )
 
-func NewClient(ctx context.Context, baseAddress string) *Client {
+func NewClient(ctx context.Context, baseAddress, storeKey string) *Client {
 
 	client := http.DefaultClient
 	return &Client{
 		baseAddress: baseAddress,
 		client:      client,
+		storeKey:    storeKey,
 	}
 }
 
 // MakePayment
 func (c *Client) MakePayment(ctx context.Context, request *Request) (*PaymentResponse, error) {
+
+	err := setHash(request, c.storeKey)
+	if err != nil {
+		return nil, err
+	}
 
 	values, err := query.Values(request)
 	if err != nil {
@@ -42,10 +49,6 @@ func (c *Client) MakePayment(ctx context.Context, request *Request) (*PaymentRes
 	}
 
 	req, err := http.NewRequest(http.MethodPost, helper.JoinUrl(c.baseAddress, paymentEndpoint), strings.NewReader(values.Encode()))
-	if err != nil {
-		return nil, err
-	}
-
 	if err != nil {
 		return nil, err
 	}

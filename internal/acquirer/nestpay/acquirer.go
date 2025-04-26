@@ -39,7 +39,7 @@ func NewAcquirer(ctx context.Context, db *repos.Repo, channelParams *ChannelPara
 
 	return &Acquirer{
 		channelParams: channelParams,
-		api:           api.NewClient(ctx, gatewayParams.Transport.BaseAddress),
+		api:           api.NewClient(ctx, gatewayParams.Transport.BaseAddress, channelParams.StoreKey),
 		dbClient:      db,
 	}
 }
@@ -64,14 +64,17 @@ func (a *Acquirer) Payment(ctx context.Context, txn *models.Transaction) (*acqui
 		Encoding:                        "utf-8",
 	}
 
-	err := api.SetHash(requestBody, a.channelParams.StoreKey)
+	paymentResp, err := a.api.MakePayment(ctx, requestBody)
 	if err != nil {
 		return nil, err
 	}
 
-	paymentResp, err := a.api.MakePayment(ctx, requestBody)
-	if err != nil {
-		return nil, err
+	if len(paymentResp.ErrMsg) > 0 {
+		status := &acquirer.TransactionStatus{Status: acquirer.REJECTED}
+		status.Info = map[string]string{
+			"ps_error_message": helper.DecodeUnicode(paymentResp.ErrMsg),
+		}
+		return status, nil
 	}
 
 	statusBody := &api.StatusRequest{
