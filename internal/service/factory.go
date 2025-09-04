@@ -8,6 +8,7 @@ import (
 	"net/url"
 
 	"testStand/internal/acquirer"
+	"testStand/internal/acquirer/asupayment"
 	"testStand/internal/acquirer/auris"
 	"testStand/internal/acquirer/paylink"
 	"testStand/internal/acquirer/sequoia"
@@ -21,9 +22,10 @@ import (
 var ErrUnsupportedAcquirer = errors.New("unsupported acquirer")
 
 const (
-	AURIS   = "auris"
-	SEQUOIA = "sequoia"
-	PAYLINK = "paylink"
+	AURIS      = "auris"
+	SEQUOIA    = "sequoia"
+	PAYLINK    = "paylink"
+	ASUPAYMENT = "asupayment"
 )
 
 type Factory struct {
@@ -51,6 +53,7 @@ func (f *Factory) Create(ctx context.Context, txn *models.Transaction) (any, err
 		return nil, err
 	}
 	logger.Info(fmt.Sprintf("Loaded gateway: %v", gateway))
+
 	channel, err := f.dbClient.GetChannel(*txn.ChnName)
 	if err != nil {
 		logger.Error(fmt.Sprint(2, err))
@@ -68,7 +71,6 @@ func (f *Factory) Create(ctx context.Context, txn *models.Transaction) (any, err
 // create
 func (f *Factory) create(ctx context.Context, txn *models.Transaction, gateway *repos.Gateway, channelParams repos.Params, callbackUrl string) (acquirer.Acquirer, error) {
 	logger := log.New("dev")
-
 	var err error
 	var acq acquirer.Acquirer
 
@@ -101,6 +103,13 @@ func (f *Factory) create(ctx context.Context, txn *models.Transaction, gateway *
 			return nil, err
 		}
 		acq = paylink.NewAcquirer(ctx, f.dbClient, &chParams, &gtwParams, callbackUrl)
+	case ASUPAYMENT:
+		var chParams asupayment.ChannelParams
+		var gtwParams asupayment.GatewayParams
+		if err = f.unmarshalParams(gateway.ParamsJson, channelParams.Credentials, &gtwParams, &chParams); err != nil {
+			return nil, err
+		}
+		acq = asupayment.NewAcquirer(ctx, f.dbClient, &chParams, &gtwParams, callbackUrl)
 	default:
 		return nil, ErrUnsupportedAcquirer
 	}
