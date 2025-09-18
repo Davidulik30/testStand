@@ -34,10 +34,6 @@ func NewClient(ctx context.Context, baseAddress, SecretKey string, ApiKey string
 	}
 }
 
-func (c *Client) MakeDeposit(ctx context.Context, request Request) (*Response, error) {
-	return nil, errors.New("MakeDeposit not implemented")
-}
-
 func (c *Client) MakeWithdraw(ctx context.Context, request Request) (*Response, error) {
 	if c.secretkey != "" {
 		request.Signature = CalcSignature(request.Merchant, request.CardData.CardNumber, request.Amount, c.secretkey)
@@ -48,10 +44,6 @@ func (c *Client) MakeWithdraw(ctx context.Context, request Request) (*Response, 
 		return nil, err
 	}
 	return resp, nil
-}
-
-func (c *Client) CheckStatus(ctx context.Context, request StatusRequest) (*StatusResponse, error) {
-	return nil, errors.New("CheckStatus not implemented")
 }
 
 func (c *Client) makeRequest(ctx context.Context, payload any, endpoint string, outResponse any) error {
