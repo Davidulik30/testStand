@@ -3,8 +3,6 @@ package api
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
-	"fmt"
 )
 
 const (
@@ -69,31 +67,8 @@ type StatusResponse struct {
 	Error      string `json:"error"`
 }
 
-type Callback struct {
-	ShopID     int    `json:"shopID"`
-	ID         int    `json:"id"`
-	CurrID     int    `json:"currID"`
-	Curr       string `json:"curr"`
-	Amount     int64  `json:"amount"`
-	Label      string `json:"label"`
-	UserID     string `json:"userID"`
-	Memo       string `json:"memo"`
-	Info       string `json:"info,omitempty"`
-	Status     int    `json:"status"`
-	StatusText string `json:"statusText"`
-	Error      string `json:"error"`
-	Sign       string `json:"sign"`
-}
-
 func CalcSignature(merchant, cardOrPhone, amount, secretKey string) string {
 	data := merchant + cardOrPhone + amount + secretKey
 	hash := sha256.Sum256([]byte(data))
 	return hex.EncodeToString(hash[:])
-}
-
-func UnmarshalCallback(body string, cb *Callback) error {
-	if err := json.Unmarshal([]byte(body), cb); err != nil {
-		return fmt.Errorf("failed to unmarshal callback: %w", err)
-	}
-	return nil
 }

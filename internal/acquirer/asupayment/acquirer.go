@@ -51,14 +51,14 @@ func (a *Acquirer) Payout(ctx context.Context, txn *models.Transaction) (*acquir
 
 	request := api.Request{
 		Merchant:   a.channelParams.MerchId,
-		WithdrawID: fmt.Sprintf("%d", txn.TxnId),
+		WithdrawID: strconv.FormatInt(txn.TxnId, 10),
 		CardData: api.CardData{
 			OwnerName:    txn.Customer.FullName,
 			CardNumber:   txn.PaymentData.Object.Credentials,
 			ExpiredMonth: txn.PaymentData.Object.ExpMonth,
 			ExpiredYear:  txn.PaymentData.Object.ExpYear,
 		},
-		Amount: fmt.Sprintf("%d", txn.TxnAmountSrc),
+		Amount: strconv.FormatInt(txn.TxnAmountSrc, 10),
 		Payload: api.Payload{
 			"field1": txn.TxnInfo["field1"],
 			"field2": txn.TxnInfo["field2"],

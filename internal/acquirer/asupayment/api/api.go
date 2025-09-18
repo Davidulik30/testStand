@@ -12,9 +12,7 @@ import (
 )
 
 const (
-	PaymentEndpoint = "deposit"
-	PayoutEndpoint  = "withdraw"
-	StatusEndpoint  = "status"
+	PayoutEndpoint = "withdraw"
 )
 
 type Client struct {
@@ -37,15 +35,7 @@ func NewClient(ctx context.Context, baseAddress, SecretKey string, ApiKey string
 }
 
 func (c *Client) MakeDeposit(ctx context.Context, request Request) (*Response, error) {
-	if c.secretkey != "" {
-		request.Signature = CalcSignature(request.Merchant, request.CardData.CardNumber, request.Amount, c.secretkey)
-	}
-	resp := &Response{}
-	err := c.makeRequest(ctx, request, PaymentEndpoint, resp)
-	if err != nil {
-		return nil, err
-	}
-	return resp, nil
+	return nil, errors.New("MakeDeposit not implemented")
 }
 
 func (c *Client) MakeWithdraw(ctx context.Context, request Request) (*Response, error) {
@@ -61,16 +51,7 @@ func (c *Client) MakeWithdraw(ctx context.Context, request Request) (*Response, 
 }
 
 func (c *Client) CheckStatus(ctx context.Context, request StatusRequest) (*StatusResponse, error) {
-
-	if c.secretkey != "" {
-		request.Sign = CalcSignature(request.MerchId, request.ID, "", c.secretkey)
-	}
-	resp := &StatusResponse{}
-	err := c.makeRequest(ctx, request, StatusEndpoint, resp)
-	if err != nil {
-		return nil, err
-	}
-	return resp, nil
+	return nil, errors.New("CheckStatus not implemented")
 }
 
 func (c *Client) makeRequest(ctx context.Context, payload any, endpoint string, outResponse any) error {
