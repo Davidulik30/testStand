@@ -62,7 +62,6 @@ func NewAcquirer(ctx context.Context, db *repos.Repo, channelParams *ChannelPara
 
 func (a *Acquirer) Payment(ctx context.Context, txn *models.Transaction) (*acquirer.TransactionStatus, error) {
 	logger := log.New("aplex-payment")
-	logger.Infof("Payment: txn_id=%d, currency=%s, amount=%d, customer=%s", txn.TxnId, txn.TxnCurrency, txn.TxnAmountSrc, txn.Customer.FullName)
 
 	request := api.Request{
 		FiatSymbol:   txn.TxnCurrencySrc,
@@ -72,7 +71,6 @@ func (a *Acquirer) Payment(ctx context.Context, txn *models.Transaction) (*acqui
 		WebHookUrl:   Webhooklink,
 		ExternalID:   strconv.FormatInt(txn.TxnId, 10),
 	}
-	logger.Infof("Payment request: %+v", request)
 
 	response, err := a.api.MakeTransaction(ctx, request)
 	if err != nil {
@@ -101,7 +99,6 @@ func (a *Acquirer) Payment(ctx context.Context, txn *models.Transaction) (*acqui
 func (a *Acquirer) Payout(ctx context.Context, txn *models.Transaction) (*acquirer.TransactionStatus, error) {
 
 	logger := log.New("aplex-payout")
-	logger.Infof("Payout: txn_id=%d, currency=%s, amount=%d, customer=%s", txn.TxnId, txn.TxnCurrency, txn.TxnAmountSrc, txn.Customer.FullName)
 
 	// Проверка обязательных параметров
 	if txn.Customer.FullName == "" {

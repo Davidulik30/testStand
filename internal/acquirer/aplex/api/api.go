@@ -83,26 +83,20 @@ func (c *Client) makeRequest(ctx context.Context, payload any, endpoint string, 
 
 	resp, err := c.client.Do(req)
 	if err != nil {
-		log.Printf("[aplex][makeRequest] Ошибка отправки запроса: %v", err)
 		return err
 	}
 	defer resp.Body.Close()
 
 	respBody, _ := io.ReadAll(resp.Body)
-	log.Printf("Server response status: %s", resp.Status)
-	log.Printf("Server response body: %s", string(respBody))
 
 	if resp.StatusCode >= http.StatusInternalServerError {
-		log.Printf("[aplex][makeRequest] Сервер вернул ошибку: %s", resp.Status)
 		return errors.New("declined state due to network or internal error")
 	}
 
 	err = json.Unmarshal(respBody, outResponse)
 	if err != nil {
-		log.Printf("[aplex][makeRequest] Ошибка разбора ответа: %v", err)
 		return err
 	}
-	log.Printf("[aplex][makeRequest] Успешный ответ: %+v", outResponse)
 	return nil
 }
 
@@ -115,6 +109,5 @@ func ValidateSignature(id, status, hash, secretKey string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	log.Printf("[aplex][ValidateSignature] cbSignHex: %s, calculated: %s", hex.EncodeToString(cbSignHex), hex.EncodeToString(signCalculated.Sum(nil)))
 	return hmac.Equal(cbSignHex, signCalculated.Sum(nil)), nil
 }
