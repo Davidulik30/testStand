@@ -38,7 +38,6 @@ func NewClient(ctx context.Context, baseAddress, SecretKey string, ApiKey string
 	}
 }
 
-// Универсальный метод для транзакций (BUY/SELL)
 func (c *Client) MakeTransaction(ctx context.Context, request Request) (*Response, error) {
 	log.Printf("[aplex][MakeTransaction] Входные данные: %+v", request)
 	if request.Direction == "BUY" {

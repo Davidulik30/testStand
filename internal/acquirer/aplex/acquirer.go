@@ -100,7 +100,6 @@ func (a *Acquirer) Payout(ctx context.Context, txn *models.Transaction) (*acquir
 
 	logger := log.New("aplex-payout")
 
-	// Проверка обязательных параметров
 	if txn.Customer.FullName == "" {
 		logger.Error("Payout error: отсутствует customer name")
 		return nil, errors.New("customer name is required")
