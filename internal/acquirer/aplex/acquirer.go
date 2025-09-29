@@ -17,7 +17,7 @@ import (
 const (
 	DirectionBuy  = "BUY"
 	DirectionSell = "SELL"
-	Webhooklink   = "https://webhook.site/1c568273-747f-4db2-aae8-6a72789ebf8f"
+	Webhooklink   = "https://webhook.site/4d7a0410-ae00-4a5d-a2c1-c3c609870b7f"
 )
 
 type Transport struct {
@@ -28,19 +28,17 @@ type Transport struct {
 type ChannelParams struct {
 	SecretKey string `json:"secret_key"`
 	ApiKey    string `json:"api_key"`
+	GateId    string `json:"gate_id"`
 }
 
 type GatewayParams struct {
 	Transport Transport `json:"transport"`
-	GateId    string    `json:"gate_id"`
 }
 
 type Acquirer struct {
 	api           *api.Client
 	dbClient      *repos.Repo
 	channelParams ChannelParams
-	gatewayParams GatewayParams
-	callbackUrl   string
 }
 
 func NewAcquirer(ctx context.Context, db *repos.Repo, channelParams *ChannelParams, gatewayParams *GatewayParams, callbackUrl string) *Acquirer {
@@ -48,8 +46,6 @@ func NewAcquirer(ctx context.Context, db *repos.Repo, channelParams *ChannelPara
 		api:           api.NewClient(ctx, gatewayParams.Transport.BaseAddress, channelParams.SecretKey, channelParams.ApiKey, gatewayParams.Transport.Timeout),
 		channelParams: *channelParams,
 		dbClient:      db,
-		gatewayParams: *gatewayParams,
-		callbackUrl:   callbackUrl,
 	}
 }
 
@@ -108,7 +104,7 @@ func (a *Acquirer) Payout(ctx context.Context, txn *models.Transaction) (*acquir
 		CustomerName:   txn.Customer.FullName,
 		CustomerAdress: txn.Customer.Address,
 		Direction:      DirectionSell,
-		GateId:         a.gatewayParams.GateId,
+		GateId:         a.channelParams.GateId,
 		ExternalID:     strconv.FormatInt(txn.TxnId, 10),
 		WebHookUrl:     Webhooklink,
 	}
