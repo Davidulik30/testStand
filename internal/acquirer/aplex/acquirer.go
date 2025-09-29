@@ -31,32 +31,25 @@ type ChannelParams struct {
 }
 
 type GatewayParams struct {
-	Transport      Transport       `json:"transport"`
-	PaymentMethods []PaymentMethod `json:"payment_methods"`
-}
-
-type PaymentMethod struct {
-	Id    string  `json:"id"`
-	GtwId *string `json:"gtw_id"`
+	Transport Transport `json:"transport"`
+	GateId    string    `json:"gate_id"`
 }
 
 type Acquirer struct {
-	api            *api.Client
-	dbClient       *repos.Repo
-	channelParams  ChannelParams
-	gatewayParams  GatewayParams
-	paymentMethods []PaymentMethod
-	callbackUrl    string
+	api           *api.Client
+	dbClient      *repos.Repo
+	channelParams ChannelParams
+	gatewayParams GatewayParams
+	callbackUrl   string
 }
 
 func NewAcquirer(ctx context.Context, db *repos.Repo, channelParams *ChannelParams, gatewayParams *GatewayParams, callbackUrl string) *Acquirer {
 	return &Acquirer{
-		api:            api.NewClient(ctx, gatewayParams.Transport.BaseAddress, channelParams.SecretKey, channelParams.ApiKey, gatewayParams.Transport.Timeout),
-		channelParams:  *channelParams,
-		dbClient:       db,
-		paymentMethods: gatewayParams.PaymentMethods,
-		gatewayParams:  *gatewayParams,
-		callbackUrl:    callbackUrl,
+		api:           api.NewClient(ctx, gatewayParams.Transport.BaseAddress, channelParams.SecretKey, channelParams.ApiKey, gatewayParams.Transport.Timeout),
+		channelParams: *channelParams,
+		dbClient:      db,
+		gatewayParams: *gatewayParams,
+		callbackUrl:   callbackUrl,
 	}
 }
 
@@ -115,7 +108,7 @@ func (a *Acquirer) Payout(ctx context.Context, txn *models.Transaction) (*acquir
 		CustomerName:   txn.Customer.FullName,
 		CustomerAdress: txn.Customer.Address,
 		Direction:      DirectionSell,
-		GateId:         *a.gatewayParams.PaymentMethods[0].GtwId,
+		GateId:         a.gatewayParams.GateId,
 		ExternalID:     strconv.FormatInt(txn.TxnId, 10),
 		WebHookUrl:     Webhooklink,
 	}

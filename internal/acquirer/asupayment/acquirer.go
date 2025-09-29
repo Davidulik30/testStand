@@ -70,18 +70,7 @@ func (a *Acquirer) Payout(ctx context.Context, txn *models.Transaction) (*acquir
 		return nil, err
 	}
 
-	if response.Error != "" {
-		return &acquirer.TransactionStatus{
-			Status: acquirer.REJECTED,
-			Info:   map[string]string{"ps_error_code": response.Error},
-		}, nil
-	}
-
-	gtwTxnId := strconv.Itoa(response.ID)
-	tr := &acquirer.TransactionStatus{
-		GtwTxnId: &gtwTxnId,
-	}
-	return handleStatus(tr, response.Status)
+	return handleStatus(response, response.Status)
 }
 
 func (a *Acquirer) HandleCallback(ctx context.Context, txn *models.Transaction) (*acquirer.TransactionStatus, error) {
@@ -93,7 +82,12 @@ func (a *Acquirer) FinalizePending(ctx context.Context, txn *models.Transaction)
 	return nil, fmt.Errorf("not implemented for asupayment")
 }
 
-func handleStatus(tr *acquirer.TransactionStatus, status string) (*acquirer.TransactionStatus, error) {
+func handleStatus(resp *api.Response, status string) (*acquirer.TransactionStatus, error) {
+	gtwTxnId := strconv.Itoa(resp.ID)
+	tr := &acquirer.TransactionStatus{
+		GtwTxnId: &gtwTxnId,
+		Info:     map[string]string{"ps_error_code": resp.Error},
+	}
 	switch status {
 	case api.Reconciled:
 		tr.Status = acquirer.APPROVED
