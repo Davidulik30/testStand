@@ -9,30 +9,33 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"testStand/internal/acquirer/helper"
 )
 
 const (
-	OfferEndpoint = "offer/external"
+	OfferEndpoint   = "offer/external"
+	SignGenEndpoint = "user/generate-signature-key"
 )
 
 type Client struct {
-	apikey      string
-	baseAddress string
-	secretkey   string
-	client      *http.Client
-	Timeout     *int
+	email        string
+	password     string
+	apikey       string
+	baseAddress  string
+	signatureKey string
+	client       *http.Client
+	Timeout      *int
 }
 
-func NewClient(ctx context.Context, baseAddress, SecretKey string, ApiKey string, timeout *int) *Client {
+func NewClient(ctx context.Context, baseAddress, Email string, Password string, ApiKey string, timeout *int) *Client {
 	client := http.DefaultClient
 	return &Client{
+		email:       Email,
+		password:    Password,
 		apikey:      ApiKey,
 		baseAddress: baseAddress,
-		secretkey:   SecretKey,
 		client:      client,
 		Timeout:     timeout,
 	}
@@ -64,12 +67,10 @@ func (c *Client) makeRequest(ctx context.Context, payload any, endpoint string, 
 		return err
 	}
 
-	url := helper.JoinUrl(c.baseAddress, endpoint)
-
-	log.Printf("[aplex] Final request URL: %s", url)
+	log.Printf("[aplex] Final request URL: %s", helper.JoinUrl(c.baseAddress, endpoint))
 	log.Printf("[aplex] Final request JSON: %s", string(body))
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, helper.JoinUrl(c.baseAddress, endpoint), bytes.NewReader(body))
 	if err != nil {
 		log.Printf("[aplex][makeRequest] Ошибка создания запроса: %v", err)
 		return err
@@ -86,21 +87,25 @@ func (c *Client) makeRequest(ctx context.Context, payload any, endpoint string, 
 	}
 	defer resp.Body.Close()
 
-	respBody, _ := io.ReadAll(resp.Body)
-
 	if resp.StatusCode >= http.StatusInternalServerError {
 		return errors.New("declined state due to network or internal error")
 	}
 
-	err = json.Unmarshal(respBody, outResponse)
+	err = json.NewDecoder(resp.Body).Decode(&outResponse)
 	if err != nil {
-		return err
+		return nil // error EOF, because invalid url
 	}
 	return nil
 }
 
-func ValidateSignature(id, status, hash, secretKey string) (bool, error) {
-	signCalculated := hmac.New(sha256.New, []byte(secretKey))
+func (c *Client) ValidateSignature(id string, status string, hash string, ctx context.Context) (bool, error) {
+
+	err := c.GetSignatureKey(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	signCalculated := hmac.New(sha256.New, []byte(c.signatureKey))
 	if _, err := signCalculated.Write([]byte(fmt.Sprintf("id=%s\nstatus=%s", id, status))); err != nil {
 		return false, err
 	}
@@ -109,4 +114,22 @@ func ValidateSignature(id, status, hash, secretKey string) (bool, error) {
 		return false, err
 	}
 	return hmac.Equal(cbSignHex, signCalculated.Sum(nil)), nil
+}
+
+func (c *Client) GetSignatureKey(ctx context.Context) error {
+
+	request := UserLoad{
+		Email:    c.email,
+		Password: c.password,
+	}
+	resp := &Response{}
+	err := c.makeRequest(ctx, request, SignGenEndpoint, resp)
+
+	if err != nil {
+		log.Printf("[aplex][GetSignatureKey] Ошибка: %v", err)
+		return err
+	}
+	c.signatureKey = resp.Signatrue
+
+	return nil
 }

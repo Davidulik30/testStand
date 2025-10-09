@@ -4,10 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strconv"
 	"testStand/internal/acquirer"
 	"testStand/internal/acquirer/aplex/api"
+	"testStand/internal/acquirer/helper"
 	"testStand/internal/models"
 	"testStand/internal/repos"
 
@@ -17,7 +17,7 @@ import (
 const (
 	DirectionBuy  = "BUY"
 	DirectionSell = "SELL"
-	Webhooklink   = "https://webhook.site/4d7a0410-ae00-4a5d-a2c1-c3c609870b7f"
+	Webhooklink   = "https://webhook.site/89cb49a4-8464-4e6f-876a-149f21a831f7"
 )
 
 type Transport struct {
@@ -26,6 +26,8 @@ type Transport struct {
 }
 
 type ChannelParams struct {
+	Email     string `json:"email"`
+	Password  string `json:"password"`
 	SecretKey string `json:"secret_key"`
 	ApiKey    string `json:"api_key"`
 	GateId    string `json:"gate_id"`
@@ -43,7 +45,7 @@ type Acquirer struct {
 
 func NewAcquirer(ctx context.Context, db *repos.Repo, channelParams *ChannelParams, gatewayParams *GatewayParams, callbackUrl string) *Acquirer {
 	return &Acquirer{
-		api:           api.NewClient(ctx, gatewayParams.Transport.BaseAddress, channelParams.SecretKey, channelParams.ApiKey, gatewayParams.Transport.Timeout),
+		api:           api.NewClient(ctx, gatewayParams.Transport.BaseAddress, channelParams.Email, channelParams.Password, channelParams.ApiKey, gatewayParams.Transport.Timeout),
 		channelParams: *channelParams,
 		dbClient:      db,
 	}
@@ -156,7 +158,7 @@ func (a *Acquirer) HandleCallback(ctx context.Context, txn *models.Transaction) 
 		txnStatus.GtwTxnId = &callback.ID
 	}
 
-	isValid, err := api.ValidateSignature(callback.ID, callback.Status, callback.Signature, a.channelParams.SecretKey)
+	isValid, err := a.api.ValidateSignature(callback.ID, callback.Status, callback.Signature, ctx)
 	if err != nil {
 		logger.Error("error validating signature: ", err)
 		return &acquirer.TransactionStatus{
@@ -177,7 +179,7 @@ func (a *Acquirer) HandleCallback(ctx context.Context, txn *models.Transaction) 
 
 // FinalizePending
 func (a *Acquirer) FinalizePending(ctx context.Context, txn *models.Transaction) (*acquirer.TransactionStatus, error) {
-	return nil, fmt.Errorf("not implemented for asupayment")
+	return helper.UnsupportedMethodError()
 }
 
 func handleStatus(tr *acquirer.TransactionStatus, status string) (*acquirer.TransactionStatus, error) {

@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"testStand/internal/acquirer"
 	"testStand/internal/acquirer/asupayment/api"
+	"testStand/internal/acquirer/helper"
 	"testStand/internal/models"
 	"testStand/internal/repos"
 )
@@ -74,12 +75,12 @@ func (a *Acquirer) Payout(ctx context.Context, txn *models.Transaction) (*acquir
 }
 
 func (a *Acquirer) HandleCallback(ctx context.Context, txn *models.Transaction) (*acquirer.TransactionStatus, error) {
-	return nil, fmt.Errorf("not implemented for asupayment")
+	return helper.UnsupportedMethodError()
 }
 
 // FinalizePending
 func (a *Acquirer) FinalizePending(ctx context.Context, txn *models.Transaction) (*acquirer.TransactionStatus, error) {
-	return nil, fmt.Errorf("not implemented for asupayment")
+	return helper.UnsupportedMethodError()
 }
 
 func handleStatus(resp *api.Response, status string) (*acquirer.TransactionStatus, error) {

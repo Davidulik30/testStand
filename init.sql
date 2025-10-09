@@ -31,7 +31,7 @@ INSERT INTO public.channel (chn_name, gtw_id, chn_params_jsonb)
 VALUES ('paylink', 1, '{"credentials": {"api_key": "m9bb1lelXNK3c198UWb2e41J1EQM", "merch_id": "52161-b615-4211-8638-3998bdb806c0"}, "payment_methods": ["p2pcard"]}'),
  ('auris', 2, '{"credentials": {"api_key": "049050051052-8ECG0WKvwSTWBzHTv2qtzy6MTiCkEoT2QAVAmNoGfQPzm02sPuBtz4nRwCJRs6fmM0WHUNqke6gG8o1MKcVHZGpJScZtOt8SmC3X1PGRx9uMTL3rw-OQP244B0M3HTID6T8PixLROqwaYQHJq6", "shop_id": 1102, "secret_key": "049050051052-jVDNvl8Lm8U4LQ7NPFGP2K03-k7w0o06k"}, "payment_methods": ["p2pcard"]}'),
  ('asupayment', 4, '{"credentials": {"api_key": "c2RmZHNhYnZmZGFiYWV0dnJ0c3JhZGZoYnN0cmRmdmJzZ2Z4MjM0NTQzZ2czcXZhZQ==",  "secret_key": "superSecretKey228","merchant_id":"32"}, "payment_methods": ["p2pcard"]}'),
- ('aplex', 5, '{"credentials": {"api_key": "6fO5obBS2qM6Q9IWwkhMQ2MD1emVB1aAtHwTAabSD0tBLZ9giDwRtXTJlaiKWh11==","gate_id": "657b6bafa93f477a573a66d0",  "secret_key": "FH1z1rjdTNQzWHGK7LvoqMLdN3UfZ7eF"}, "payment_methods": ["p2pcard"]}'),
+ ('aplex', 5, '{"credentials": {"api_key": "6fO5obBS2qM6Q9IWwkhMQ2MD1emVB1aAtHwTAabSD0tBLZ9giDwRtXTJlaiKWh11==","gate_id": "657b6bafa93f477a573a66d0","password":"dev","email":"buyer@dev.alpex.app",  "secret_key": "FH1z1rjdTNQzWHGK7LvoqMLdN3UfZ7eF"}, "payment_methods": ["p2pcard"]}'),
  ('sequoia', 3, '{"credentials": {"secret_key": "8f5DSbXOolXwhLVmtOd", "callback_secret": "fqLFXw9BQLbW7G83Uf"}, "payment_methods": ["p2pcard"]}');
 
 -- auto-generated definition

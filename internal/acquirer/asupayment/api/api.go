@@ -51,12 +51,11 @@ func (c *Client) makeRequest(ctx context.Context, payload any, endpoint string, 
 	if err != nil {
 		return err
 	}
-	url := helper.JoinUrl(c.baseAddress, endpoint)
 
-	log.Printf("[asupayment] Final request URL: %s", url)
+	log.Printf("[asupayment] Final request URL: %s", helper.JoinUrl(c.baseAddress, endpoint))
 	log.Printf("[asupayment] Final request JSON: %s", string(body))
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, helper.JoinUrl(c.baseAddress, endpoint), bytes.NewReader(body))
 	if err != nil {
 		return err
 	}

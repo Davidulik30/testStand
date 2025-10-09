@@ -10,6 +10,11 @@ const (
 
 type Payload map[string]string
 
+type UserLoad struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
 type Request struct {
 	FiatSymbol     string `json:"fiat_symbol"`
 	FiatAmount     string `json:"fiat_amount"`
@@ -39,6 +44,7 @@ type Response struct {
 	Error       string `json:"error"`
 	Nspk        string `json:"nspk"`
 	PaymentLink string `json:"paymentLink"`
+	Signatrue   string `json:"signature_key"`
 }
 
 type Callback struct {
