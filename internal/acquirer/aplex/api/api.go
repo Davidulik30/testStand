@@ -100,6 +100,7 @@ func (c *Client) makeRequest(ctx context.Context, payload any, endpoint string, 
 
 func (c *Client) ValidateSignature(id string, status string, hash string, ctx context.Context) (bool, error) {
 
+	println(c.GetSignatureKey(ctx))
 	err := c.GetSignatureKey(ctx)
 	if err != nil {
 		return false, err
